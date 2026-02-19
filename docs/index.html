@@ -1,1 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Krufin — Workflow Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Anybody:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+    :root {
+      --bg: #0E0E10;
+      --surface: #18181C;
+      --surface-hover: #1F1F24;
+      --border: #2A2A30;
+      --border-hover: #4A4A55;
+      --text: #E8E6E3;
+      --text-muted: #7A7880;
+      --accent: #C8FF73;
+      --accent-dim: rgba(200, 255, 115, 0.08);
+      --accent-glow: rgba(200, 255, 115, 0.15);
+      --radius: 12px;
+    }
+
+    body {
+      font-family: 'IBM Plex Mono', monospace;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 60px 24px 40px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Subtle noise texture */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      opacity: 0.03;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .portal { position: relative; z-index: 1; width: 100%; max-width: 580px; }
+
+    /* Header */
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+      animation: fadeIn 0.6s ease-out;
+    }
+
+    .brand-mark {
+      width: 10px;
+      height: 10px;
+      background: var(--accent);
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .brand h1 {
+      font-family: 'Anybody', sans-serif;
+      font-weight: 600;
+      font-size: 22px;
+      letter-spacing: -0.5px;
+      color: var(--text);
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 40px;
+      padding-left: 20px;
+      animation: fadeIn 0.6s ease-out 0.1s both;
+    }
+
+    /* Workflow Cards */
+    .workflows {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .flow-card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      text-decoration: none;
+      color: var(--text);
+      transition: all 0.25s ease;
+      position: relative;
+      overflow: hidden;
+      animation: slideUp 0.5s ease-out both;
+    }
+
+    .flow-card:nth-child(1) { animation-delay: 0.15s; }
+    .flow-card:nth-child(2) { animation-delay: 0.22s; }
+    .flow-card:nth-child(3) { animation-delay: 0.29s; }
+    .flow-card:nth-child(4) { animation-delay: 0.36s; }
+
+    .flow-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, var(--accent-dim), transparent 60%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .flow-card:hover {
+      border-color: var(--border-hover);
+      background: var(--surface-hover);
+      transform: translateX(4px);
+    }
+
+    .flow-card:hover::before { opacity: 1; }
+    .flow-card:hover .flow-icon { background: var(--accent); color: var(--bg); }
+    .flow-card:hover .flow-arrow { opacity: 1; transform: translateX(0); color: var(--accent); }
+
+    .flow-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      background: var(--accent-dim);
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+      transition: all 0.25s ease;
+      position: relative;
+      z-index: 1;
+    }
+
+    .flow-info {
+      flex: 1;
+      min-width: 0;
+      position: relative;
+      z-index: 1;
+    }
+
+    .flow-name {
+      font-family: 'Anybody', sans-serif;
+      font-weight: 600;
+      font-size: 15px;
+      letter-spacing: -0.2px;
+      margin-bottom: 2px;
+    }
+
+    .flow-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .flow-arrow {
+      font-size: 18px;
+      color: var(--text-muted);
+      opacity: 0;
+      transform: translateX(-6px);
+      transition: all 0.25s ease;
+      position: relative;
+      z-index: 1;
+      flex-shrink: 0;
+    }
+
+    /* Tag */
+    .flow-tag {
+      font-size: 10px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      padding: 3px 7px;
+      border-radius: 4px;
+      position: relative;
+      z-index: 1;
+      flex-shrink: 0;
+    }
+
+    .tag-active { background: rgba(200, 255, 115, 0.12); color: var(--accent); }
+    .tag-soon { background: rgba(255, 255, 255, 0.06); color: var(--text-muted); }
+
+    /* Footer */
+    .footer {
+      margin-top: 48px;
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-muted);
+      opacity: 0.5;
+      animation: fadeIn 0.6s ease-out 0.5s both;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 480px) {
+      body { padding: 40px 16px 32px; }
+      .flow-card { padding: 14px 16px; gap: 12px; }
+      .flow-name { font-size: 14px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="portal">
+  <div class="brand">
+    <div class="brand-mark"></div>
+    <h1>Krufin</h1>
+  </div>
+  <p class="subtitle">Workflow Portal</p>
+
+  <div class="workflows">
+
+    <a href="https://krufin.app.n8n.cloud/form/5ca9ec38-ea72-46d1-8d00-6d1f4ad4c181" target="_blank" class="flow-card">
+      <div class="flow-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+      <div class="flow-info">
+        <div class="flow-name">Consultant Management</div>
+        <div class="flow-desc">Create &amp; edit consultant profiles</div>
+      </div>
+      <span class="flow-tag tag-active">Live</span>
+      <span class="flow-arrow">&rarr;</span>
+    </a>
+
+    <!-- 
+    =============================================
+    ADD MORE WORKFLOWS HERE — copy the template:
+    =============================================
+
+    <a href="YOUR_N8N_FORM_URL" target="_blank" class="flow-card">
+      <div class="flow-icon">
+        ICON_SVG_HERE
+      </div>
+      <div class="flow-info">
+        <div class="flow-name">Workflow Name</div>
+        <div class="flow-desc">Short description</div>
+      </div>
+      <span class="flow-tag tag-active">Live</span>
+      <span class="flow-arrow">&rarr;</span>
+    </a>
+
+    For upcoming/disabled workflows, use tag-soon:
+    <span class="flow-tag tag-soon">Soon</span>
+    =============================================
+    -->
+
+  </div>
+
+  <div class="footer">Krufin &middot; Powered by n8n</div>
+</div>
+
+</body>
+</html>
